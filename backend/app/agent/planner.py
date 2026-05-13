@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from backend.app.embeddings.grok import chat_completion
+from backend.app.embeddings.gemini import chat_completion
 from backend.app.models.schemas import AgentResponse, SourceCitation
 from backend.app.agent.tools.legal_rag import legal_search_tool
 from backend.app.agent.tools.contract_analyzer import analyze_contract

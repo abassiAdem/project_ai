@@ -4,12 +4,12 @@ from typing import List, Tuple
 
 from backend.app.config import settings
 from backend.app.vectorstore.chroma import get_collection
-from backend.app.embeddings.grok import embed_texts
+from backend.app.embeddings.gemini import embed_query
 
 
 def search(query: str, top_k: int | None = None) -> List[Tuple[str, dict]]:
     collection = get_collection()
-    query_emb = embed_texts([query])[0]
+    query_emb = embed_query(query)
     k = top_k or settings.top_k
 
     results = collection.query(

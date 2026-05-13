@@ -7,7 +7,7 @@ from pypdf import PdfReader
 from backend.app.config import settings
 from backend.app.ingest.chunker import chunk_text
 from backend.app.vectorstore.chroma import get_collection
-from backend.app.embeddings.grok import embed_texts
+from backend.app.embeddings.gemini import embed_documents
 
 
 def _extract_pdf_text(path: str) -> List[Tuple[int, str]]:
@@ -37,15 +37,17 @@ def load_pdfs_from_sources() -> int:
         chunks = []
         metadatas = []
         ids = []
+        titles = []
         for page_num, text in pages:
             for idx, chunk in enumerate(chunk_text(text)):
                 chunk_id = f"{name}:{page_num}:{idx}"
                 chunks.append(chunk)
                 metadatas.append({"source": name, "page": page_num, "chunk_id": chunk_id})
                 ids.append(chunk_id)
+                titles.append(f"{name} page {page_num}")
 
         if chunks:
-            embeddings = embed_texts(chunks)
+            embeddings = embed_documents(chunks, titles)
             collection.upsert(
                 ids=ids,
                 documents=chunks,

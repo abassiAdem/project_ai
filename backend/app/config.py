@@ -5,16 +5,13 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 
 load_dotenv(".env")
-if not os.getenv("GROK_API_KEY"):
-    load_dotenv(".env.example", override=False)
 
 
 @dataclass
 class Settings:
-    grok_api_key: str = os.getenv("GROK_API_KEY", "")
-    grok_base_url: str = os.getenv("GROK_BASE_URL", "https://api.x.ai/v1")
-    grok_chat_model: str = os.getenv("GROK_CHAT_MODEL", "grok-2")
-    grok_embed_model: str = os.getenv("GROK_EMBED_MODEL", "grok-2-embedding")
+    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+    gemini_chat_model: str = os.getenv("GEMINI_CHAT_MODEL", "gemini-3-flash-preview")
+    gemini_embed_model: str = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-2")
 
     sources_dir: str = os.getenv("SOURCES_DIR", "./sources")
     chroma_dir: str = os.getenv("CHROMA_DIR", "./data/chroma")
