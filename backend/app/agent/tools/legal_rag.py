@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Tuple
 
 from backend.app.rag.retriever import search
-from backend.app.embeddings.gemini import chat_completion
+from backend.app.llm.groq import chat_completion
 from backend.app.models.schemas import SourceCitation
 
 

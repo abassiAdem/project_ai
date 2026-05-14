@@ -9,9 +9,13 @@ load_dotenv(".env")
 
 @dataclass
 class Settings:
-    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
-    gemini_chat_model: str = os.getenv("GEMINI_CHAT_MODEL", "gemini-3-flash-preview")
-    gemini_embed_model: str = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-2")
+    # Providers
+    llm_provider: str = os.getenv("LLM_PROVIDER", "groq")
+    embedding_provider: str = os.getenv("EMBEDDING_PROVIDER", "chroma")
+
+    # Groq (chat)
+    groq_api_key: str = os.getenv("GROQ_API_KEY", "")
+    groq_chat_model: str = os.getenv("GROQ_CHAT_MODEL", "llama-3.1-8b-instant")
 
     sources_dir: str = os.getenv("SOURCES_DIR", "./sources")
     chroma_dir: str = os.getenv("CHROMA_DIR", "./data/chroma")

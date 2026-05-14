@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
+from chromadb.utils import embedding_functions
 
 from backend.app.config import settings
 
@@ -18,7 +19,10 @@ def get_collection():
 
     _client = chromadb.PersistentClient(
         path=settings.chroma_dir,
-        settings=ChromaSettings(allow_reset=True),
+        settings=ChromaSettings(allow_reset=True, anonymized_telemetry=False),
     )
-    _collection = _client.get_or_create_collection(name="tunisian_law")
+    _collection = _client.get_or_create_collection(
+        name="tunisian_law_chroma",
+        embedding_function=embedding_functions.DefaultEmbeddingFunction(),
+    )
     return _collection

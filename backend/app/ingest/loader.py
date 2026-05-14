@@ -7,7 +7,6 @@ from pypdf import PdfReader
 from backend.app.config import settings
 from backend.app.ingest.chunker import chunk_text
 from backend.app.vectorstore.chroma import get_collection
-from backend.app.embeddings.gemini import embed_documents
 
 
 def _extract_pdf_text(path: str) -> List[Tuple[int, str]]:
@@ -26,34 +25,44 @@ def load_pdfs_from_sources() -> int:
         return 0
 
     collection = get_collection()
+    pdf_names = [name for name in os.listdir(sources) if name.lower().endswith(".pdf")]
+    _remove_sources_not_present(collection, set(pdf_names))
 
     doc_count = 0
-    for name in os.listdir(sources):
-        if not name.lower().endswith(".pdf"):
-            continue
+    for name in pdf_names:
         path = os.path.join(sources, name)
         pages = _extract_pdf_text(path)
 
         chunks = []
         metadatas = []
         ids = []
-        titles = []
         for page_num, text in pages:
             for idx, chunk in enumerate(chunk_text(text)):
                 chunk_id = f"{name}:{page_num}:{idx}"
                 chunks.append(chunk)
                 metadatas.append({"source": name, "page": page_num, "chunk_id": chunk_id})
                 ids.append(chunk_id)
-                titles.append(f"{name} page {page_num}")
 
         if chunks:
-            embeddings = embed_documents(chunks, titles)
+            collection.delete(where={"source": name})
             collection.upsert(
                 ids=ids,
                 documents=chunks,
-                embeddings=embeddings,
                 metadatas=metadatas,
             )
             doc_count += 1
 
     return doc_count
+
+
+def _remove_sources_not_present(collection, current_sources: set[str]) -> None:
+    existing = collection.get(include=["metadatas"])
+    metadatas = existing.get("metadatas") or []
+
+    stale_sources = {
+        meta.get("source")
+        for meta in metadatas
+        if meta and meta.get("source") and meta.get("source") not in current_sources
+    }
+    for source in stale_sources:
+        collection.delete(where={"source": source})
