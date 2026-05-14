@@ -12,7 +12,7 @@ Assistant juridique intelligent base sur les lois tunisiennes.
 
 ## Prerequis
 - Python 3.10+
-- Cle API Grok (xAI)
+- Cle API Groq
 
 ## Configuration
 Copiez `.env.example` vers `.env` et remplissez les valeurs.
