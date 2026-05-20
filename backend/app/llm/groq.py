@@ -10,7 +10,7 @@ from backend.app.config import settings
 GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
-def chat_completion(messages: List[dict], temperature: float = 0.2) -> str:
+def chat_completion(messages: List[dict], temperature: float = 0) -> str:
     if settings.llm_provider.lower() != "groq":
         raise RuntimeError(f"Unsupported LLM_PROVIDER: {settings.llm_provider}")
 
