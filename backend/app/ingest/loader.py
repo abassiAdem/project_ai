@@ -39,7 +39,7 @@ def load_pdfs_from_sources() -> int:
         for page_num, text in pages:
             for idx, chunk in enumerate(chunk_text(text)):
                 chunk_id = f"{name}:{page_num}:{idx}"
-                chunks.append(chunk)
+                chunks.append(f"[SOURCE: {name}]\n{chunk}")
                 metadatas.append({"source": name, "page": page_num, "chunk_id": chunk_id})
                 ids.append(chunk_id)
 
