@@ -39,7 +39,42 @@ def _build_prompt(query: str, contexts: List[Tuple[str, dict]], history: List[di
     return messages
 
 
+def _looks_like_memory_question(query: str) -> bool:
+    q = query.lower()
+    patterns = [
+        "mon premier message",
+        "premier message",
+        "premiere question",
+        "c'est quoi mon premier message",
+        "c est quoi mon premier message",
+        "dernier message",
+        "message precedent",
+        "message précédent",
+        "اول رسالة",
+        "اول سؤال",
+        "ما هي اول رسالة",
+        "ما هو اول سؤال",
+        "رسالة سابقة",
+    ]
+    return any(p in q for p in patterns)
+
+
+def _answer_from_history(query: str, history: List[dict]) -> str:
+    user_messages = [m["content"] for m in history if m.get("role") == "user"]
+    if not user_messages:
+        return "لا توجد رسائل سابقة في هذه الجلسة."
+
+    q = query.lower()
+    if "dernier" in q or "اخير" in q or "آخر" in q:
+        return f"آخر رسالة منك في هذه الجلسة هي: {user_messages[-1]}"
+
+    return f"أول رسالة منك في هذه الجلسة هي: {user_messages[0]}"
+
+
 def answer_with_rag(query: str, history: List[dict]) -> Tuple[str, List[SourceCitation]]:
+    if _looks_like_memory_question(query):
+        return _answer_from_history(query, history), []
+
     contexts = search(query)
     messages = _build_prompt(query, contexts, history)
     answer = chat_completion(messages)
