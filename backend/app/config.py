@@ -15,7 +15,7 @@ class Settings:
 
     # Groq (chat)
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
-    groq_chat_model: str = os.getenv("GROQ_CHAT_MODEL", "llama-3.1-8b-instant")
+    groq_chat_model: str = os.getenv("GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
 
     sources_dir: str = os.getenv("SOURCES_DIR", "./sources")
     chroma_dir: str = os.getenv("CHROMA_DIR", "./data/chroma")
