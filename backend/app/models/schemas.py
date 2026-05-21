@@ -37,3 +37,15 @@ class AgentResponse(BaseModel):
     answer: str
     citations: List[SourceCitation]
     notes: List[str]
+
+
+class ModifyRequest(BaseModel):
+    session_id: str
+    instructions: str
+    document_id: Optional[str] = None
+
+
+class ModifyResponse(BaseModel):
+    status: str
+    file_id: Optional[str] = None
+    message: Optional[str] = None

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import uuid
 import requests
 import gradio as gr
@@ -122,6 +123,45 @@ def handle_message(
     return history, state, "", status
 
 
+def request_contract_modification(
+    instructions: str,
+    session_id: str,
+    state: dict,
+) -> tuple[str, str | None]:
+    if not instructions.strip():
+        return "يرجى إدخال تعليمات التعديل.", None
+
+    document_id = state["documents"].get(session_id)
+    if not document_id:
+        return "يرجى رفع عقد قبل طلب التعديل.", None
+
+    payload = {
+        "session_id": session_id,
+        "instructions": instructions,
+        "document_id": document_id,
+    }
+    resp = requests.post(f"{API_URL}/agent/modify", json=payload, timeout=120)
+    resp.raise_for_status()
+    data = resp.json()
+    if data.get("status") != "ok":
+        return data.get("message", "تعذر تعديل العقد."), None
+
+    file_id = data.get("file_id")
+    if not file_id:
+        return "تعذر الحصول على ملف التعديل.", None
+
+    download_url = f"{API_URL}/downloads/{file_id}"
+    download_resp = requests.get(download_url, timeout=120)
+    download_resp.raise_for_status()
+
+    suffix = os.path.splitext(file_id)[-1] or ".docx"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+        temp_file.write(download_resp.content)
+        temp_path = temp_file.name
+
+    return "تم إنشاء نسخة معدلة جاهزة للتحميل.", temp_path
+
+
 with gr.Blocks(title="LegalMind Agent") as demo:
     gr.Markdown("# مساعد قانوني ذكي للأنظمة التونسية")
 
@@ -144,6 +184,14 @@ with gr.Blocks(title="LegalMind Agent") as demo:
                 lines=2,
             )
             send_btn = gr.Button("إرسال")
+            gr.Markdown("---")
+            modify_instructions = gr.Textbox(
+                label="تعليمات تعديل العقد",
+                placeholder="مثال: استبدل مدة التجربة إلى 3 أشهر وأضف شرط إنهاء مبكر...",
+                lines=3,
+            )
+            modify_btn = gr.Button("توليد نسخة معدلة")
+            modified_file = gr.File(label="تحميل النسخة المعدلة")
 
     demo.load(
         lambda s: gr.update(choices=s["sessions"], value=s["sessions"][0]),
@@ -178,6 +226,12 @@ with gr.Blocks(title="LegalMind Agent") as demo:
         handle_message,
         inputs=[user_input, session_selector, state],
         outputs=[chatbot, state, user_input, status_box],
+    )
+
+    modify_btn.click(
+        request_contract_modification,
+        inputs=[modify_instructions, session_selector, state],
+        outputs=[status_box, modified_file],
     )
 
 

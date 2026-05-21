@@ -10,6 +10,7 @@ from docx import Document
 from fastapi import UploadFile
 
 from backend.app.config import settings
+from backend.app.llm.groq import chat_completion
 
 
 def save_upload(file: UploadFile) -> str:
@@ -92,3 +93,52 @@ def analyze_contract(document_id: str, query: str) -> Dict[str, object]:
         "text": preview,
         "excerpt": excerpt,
     }
+
+
+def _modified_dir() -> str:
+    return os.path.join(settings.uploads_dir, "modified")
+
+
+def modify_contract(document_id: str, instructions: str) -> Dict[str, str]:
+    path = os.path.join(settings.uploads_dir, document_id)
+    if not os.path.isfile(path):
+        return {"status": "error", "message": "الوثيقة غير موجودة."}
+
+    text = _extract_text(path)
+    if len(text.strip()) < 50:
+        return {
+            "status": "error",
+            "message": (
+                "تعذر استخراج نص من العقد. قد يكون الملف صورة ممسوحة ضوئيا. "
+                "يرجى رفع نسخة نصية أو تفعيل OCR."
+            ),
+        }
+    prompt = (
+        "انت مساعد قانوني. عدّل نص العقد حسب تعليمات المستخدم بدقة، "
+        "واحتفظ بالصياغة القانونية قدر الإمكان. أعد النص كاملا بعد التعديل فقط دون شرح."
+    )
+    messages = [
+        {"role": "system", "content": prompt},
+        {
+            "role": "user",
+            "content": "\n\n".join(
+                [
+                    f"تعليمات التعديل:\n{instructions}",
+                    f"نص العقد:\n{text}",
+                ]
+            ),
+        },
+    ]
+    updated_text = chat_completion(messages, temperature=0.2)
+
+    os.makedirs(_modified_dir(), exist_ok=True)
+    file_id = f"modified-{uuid.uuid4().hex}.docx"
+    out_path = os.path.join(_modified_dir(), file_id)
+
+    doc = Document()
+    for line in updated_text.splitlines():
+        if line.strip():
+            doc.add_paragraph(line)
+    doc.save(out_path)
+
+    return {"status": "ok", "file_id": file_id}
